@@ -8,7 +8,7 @@ void SeqStactDebugPrint(SeqStact* stack,const char* msg)
     size_t i=0;
     for(;i<stack->size;i++)
     {
-        printf("(%d,%d)\n",stack->data[i],row,stack->data[i],col);
+        printf("(%d,%d)\n",stack->data[i].row,stack->data[i].col);
     }
     printf("\n");
 }
