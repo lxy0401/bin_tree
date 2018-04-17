@@ -1,6 +1,17 @@
-#include "seqstack1.h"
+#include "seqstack.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
+void SeqStactDebugPrint(SeqStact* stack,const char* msg)
+{
+    printf("[%s]\n",msg);
+    size_t i=0;
+    for(;i<stack->size;i++)
+    {
+        printf("(%d,%d)\n",stack->data[i],row,stack->data[i],col);
+    }
+    printf("\n");
+}
 
 //栈初始化
 void SeqStactInit(SeqStact* stack)
@@ -99,6 +110,48 @@ int SeqStactTop(SeqStact* stack,SeqStactType* value)
     return 1;
 }
 
+//将一个棧对值赋值到另一个棧中
+    //由于棧支持动态内存对增长，因此
+    //1.from中的元素个数<=to中的元素个数，则进行循环赋值
+    //2.若from中的元素个数>to中的元素个数，则必须要保证to中对内存足够赋值，防止内存越界
+void SeqStactAssgin(SeqStact* from,SeqStact* to)
+{
+    //为了保证to中的内存能够容纳from中的元素
+    //1.释放to中原有对内容
+    SeqStactDestroy(to);
+    //2.1根据from中对元素个数确定内存申请大小，
+    to->size=from->size;
+    to->capacity=from->capacity;
+    //2.2给to申请一个足够的内存空间
+    to->data=(SeqStactType*)malloc(to->capacity*sizeof(SeqStactType));
+    //3.赋值
+    size_t i=0;
+    for(;i<from->size;++i)
+    {
+        to->data[i]=from->data[i];
+    }
+    return ;
+}
+
+//次函数用于迷宫测试所用
+//通常棧是不允许进行遍历的，单若进行测试或者调试除外
+//此时的遍历仅用于测试所用
+//之所以写这个函数是为了能够从函数对入口开始打印路线
+//#ifdef TEST_MAZE 
+//#include "maze.c"
+//#include "seqstack.h"
+//#include <stdio.h>
+//void SeqStactDebugPrint(SeqStact* stack,const char* msg)
+//{
+//    printf("[%s]\n",msg);
+//    size_t i=0;
+//    for(;i<stack->size;i++)
+//    {
+//        printf("(%d,%d)\n",stack->data[i],row,stack->data[i],col);
+//    }
+//    printf("\n");
+//}
+////#endif
 /**
  *
  *
@@ -106,6 +159,7 @@ int SeqStactTop(SeqStact* stack,SeqStactType* value)
  *
  *
  * ****/
+#if 0
 #include <stdio.h>
 #define TEST_HEADER printf("\n========%s=========\n",__FUNCTION__)
 void TestInit()
@@ -203,3 +257,5 @@ int main()
     TestTop();
     return 0;
 }
+
+#endif

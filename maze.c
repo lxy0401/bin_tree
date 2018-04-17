@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "seqstack.h"
+//#define FOR_MAZE
 #define Max_ROW 6
 #define Max_COL 6
 typedef struct Maze
@@ -48,11 +50,11 @@ void MazePrint(Maze* maze)
  * 本质上还是使用栈，不过这个栈是由操作系统提供的，即函数调用栈
  *
  * ***********/
-typedef struct Point
-{
-    int row;
-    int col;
-}Point;
+//typedef struct Point
+//{
+//    int row;
+//    int col;
+//}Point;
 
 //判断点是否能落脚
 int CanStay(Maze* maze,Point pt)
@@ -151,16 +153,6 @@ void GetPath(Maze* maze,Point entry)
  *
  * ******/
 
-/*
-#include "seqstack1.h"
-typedef char SeqStactType;
-typedef struct SeqStact
-{
-SeqStactType* data;
-    size_t size;
-    size_t capacity;//data指向内存中能最大容纳的元素的个数MAX_SIZE的替代品
-}SeqStact;
-
 
 void GetPathByLoop(Maze* maze,Point entry)
 {
@@ -180,7 +172,7 @@ void GetPathByLoop(Maze* maze,Point entry)
     {
         //4.进入循环，获取当前栈的栈顶元素，栈顶元素一定能落脚
         Point cur;
-        int ret SeqStactTop(&stack,&cur);
+        int ret = SeqStactTop(&stack,&cur);
         if(ret == 0)
         {
             //栈为空
@@ -234,7 +226,210 @@ void GetPathByLoop(Maze* maze,Point entry)
     }
     return;
 }
-*/
+
+/********
+ * Round3 若迷宫有多条路径，找到最短的路经
+ *
+ * ***/
+void MaseInitShortPath(Maze* maze)
+{
+    int map[Max_ROW][Max_COL]={{0,1,0,0,0,0},
+                                {0,1,1,1,0,0},
+                                {0,1,0,1,1,1},
+                                {1,1,1,0,0,0},
+                                {0,0,1,0,0,0},
+                                {0,0,1,0,0,0}
+                                };
+    size_t i=0;
+    for(;i<Max_ROW;++i)
+    {
+        size_t j=0;
+        for(;j<Max_COL;++j)
+        {
+            maze->map[i][j]=map[i][j];
+        }
+    }
+    return ;
+}
+
+void _GetShortPath(Maze* maze,Point cur,Point entry,SeqStact* cur_path,SeqStact* short_path)
+{
+    //1.判断当前点是否能落脚
+    if(!CanStay(maze,cur))
+    {
+        //在地图之外，不能落脚
+        return ;
+    }
+    //2.若能落脚，将当前点进行标记，并插入到当前找到对路径cur_path中
+    Mark(maze,cur);
+    SeqStactPush(cur_path,cur);
+    //3.若标记完，判断当前点是否为出口
+    if(IsExit(maze,cur,entry))
+    {
+
+    //a)若为出口，则找到一条路经，将当前路经cur_path与short_path路径进行比较，
+    //  若当前路径cur_path比最短路径short_path短或者当前路径short_path为空，则就用当前路径cur_path来代替最短路径short_path
+    //  同时还要回溯，来继续找下一条路径
+        printf("找到了一条出路\n");
+        if(cur_path->size < short_path->size || short_path->size == 0)
+        {
+            printf("找到了一条较短的出路\n");
+            //将棧对号赋值
+            SeqStactAssgin(cur_path,short_path);
+        }
+
+    //b)若当前路径cur_path对长度大于等于最短路径short_path的长度，就尝试去找其他路径，进行回溯，
+    //  在回溯前要将cur_path对棧顶元素出棧，因为cur_path保存着当前路路径，若不是这条路经，则表示这条路已经失败
+        SeqStactPop(cur_path);
+        return ;
+    }
+    //4.若当前点不是出口点，则要继续探测其余的四个方向
+    Point up = cur;
+    up.row-=1;
+    _GetShortPath(maze,up,entry,cur_path,short_path);
+    
+    Point right = cur;
+    right.col+=1;
+    _GetShortPath(maze,right,entry,cur_path,short_path);
+
+    Point down = cur;
+    down.row+=1;
+    _GetShortPath(maze,down,entry,cur_path,short_path);
+
+    Point left = cur;
+    left.col-=1;
+    _GetShortPath(maze,left,entry,cur_path,short_path);
+    //为了找到其他的路而递归
+    //5.若四个方向都递归地探测过了，就出棧，回溯到上一个点
+    SeqStactPop(cur_path);
+    return ;
+}
+
+void GetShortPath(Maze* maze,Point entry)
+{
+    SeqStact cur_path;//保存当前找到对路经
+    SeqStact short_path;//当前最短路径
+    SeqStactInit(&cur_path);
+    SeqStactInit(&short_path);
+    _GetShortPath(maze,entry,entry,&cur_path,&short_path);//第一个entry为当前走到的点，第二个entry为真正的入口点
+    //打印棧中对内容
+    SeqStactDebugPrint(&short_path,"最短路径为：\n");
+}
+
+
+/****************
+ *
+ * Round4针对一个复杂对迷宫来找到最短路径
+ * 复杂是指迷宫有多个出口，带环
+ *
+ * ******/
+
+void MaseInitShortPathWithCycle(Maze* maze)
+{
+    int map[Max_ROW][Max_COL]={{0,1,0,0,0,0},
+                                {0,1,1,1,0,0},
+                                {0,1,0,1,1,1},
+                                {1,1,1,1,0,0},
+                                {0,0,1,0,0,0},
+                                {0,0,1,0,0,0}
+                                };
+    size_t i=0;
+    for(;i<Max_ROW;++i)
+    {
+        size_t j=0;
+        for(;j<Max_COL;++j)
+        {
+            maze->map[i][j]=map[i][j];
+        }
+    }
+    return ;
+}
+
+int CanStayWithCycle(Maze* maze,Point cur,Point pre)
+{
+    if(cur.row<0 || cur.row>=Max_ROW || cur.col<0 || cur.col>=Max_COL)
+    {
+        return 0;
+    }
+    int cur_value=maze->map[cur.row][cur.col];
+    if(cur_value == 0)
+    {
+        return 0;
+    }
+    if(cur_value == 1)
+    {
+        return 1;
+    }
+    int pre_value=maze->map[pre.row][pre.col];
+    if(cur_value>pre_value+1)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+void MarkWithCycle(Maze* maze,Point cur,Point pre)
+{
+    if(pre.row == -1 && pre.col == -1)
+    {
+        maze->map[cur.row][cur.col]=2;
+        return;
+    }
+    int pre_value=maze->map[pre.row][pre.col];
+    maze->map[cur.row][cur.col]=pre_value+1;
+}
+
+void _GetShortPathWithCycle(Maze* maze,Point cur,Point pre,Point entry,SeqStact* cur_path,SeqStact* short_path)
+{
+    if(!CanStayWithCycle(maze,cur,pre))
+    {
+        return ;
+    }
+    MarkWithCycle(maze,cur,pre);
+    if(IsExit(maze,cur,entry))
+    {
+        printf("找到了一条路径\n");
+        SeqStactPush(cur_path,cur);
+        if(cur_path->size < short_path->size || short_path->size == 0)
+        {
+            printf("找到了一条较短的出路\n");
+            SeqStactAssgin(cur_path,short_path);
+        }
+        SeqStactPop(cur_path);
+        return ;
+    }
+
+    Point up = cur;
+    up.row-=1;
+    _GetShortPathWithCycle(maze,up,cur,entry,cur_path,short_path);
+    
+    Point right = cur;
+    right.col+=1;
+    _GetShortPathWithCycle(maze,right,cur,entry,cur_path,short_path);
+
+    Point down = cur;
+    down.row+=1;
+    _GetShortPathWithCycle(maze,down,cur,entry,cur_path,short_path);
+
+    Point left = cur;
+    left.col-=1;
+    _GetShortPathWithCycle(maze,left,cur,entry,cur_path,short_path);
+    
+    SeqStactPop(cur_path);
+    return;
+}
+
+void GetShortPathWithCycle(Maze* maze,Point entry)
+{
+    SeqStact cur_path;
+    SeqStact short_path;
+    SeqStactInit(&cur_path);
+    SeqStactInit(&short_path);
+    Point pre={(-1,-1)};
+    _GetShortPathWithCycle(maze,entry,pre,entry,&cur_path,&short_path);
+    SeqStactDebugPrint(&short_path,"找到最短的路经\n");
+    
+}
 
 /****
  *
@@ -260,9 +455,44 @@ void TestRound1()
     MazePrint(&maze);
 }
 
+void TestRound2()
+{
+    TEST_HEADER;
+    Maze maze;
+    MazeInit(&maze);
+    Point entry={0,1};
+    GetPathByLoop(&maze,entry);
+    MazePrint(&maze);
+}
+
+
+void TestRound3()
+{
+    TEST_HEADER;
+    Maze maze;
+    MazeInit(&maze);
+    Point entry={0,1};
+    GetShortPath(&maze,entry);
+    MazePrint(&maze);
+}
+
+void TestRound4()
+{
+    TEST_HEADER;
+    Maze maze;
+    MazeInit(&maze);
+    Point entry={0,1};
+    GetShortPathWithCycle(&maze,entry);
+    MazePrint(&maze);
+}
+
+
 int main()
 {
     TestInit();
     TestRound1();
+    TestRound2();
+    TestRound3();
+    TestRound4();
     return 0;
 }
