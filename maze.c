@@ -156,6 +156,7 @@ void GetPath(Maze* maze,Point entry)
 
 void GetPathByLoop(Maze* maze,Point entry)
 {
+
     //1.创建一个栈，并初始化，这个栈保存着我们走过的路径
    SeqStact stack;
    SeqStactInit(&stack);
@@ -254,6 +255,8 @@ void MaseInitShortPath(Maze* maze)
 
 void _GetShortPath(Maze* maze,Point cur,Point entry,SeqStact* cur_path,SeqStact* short_path)
 {
+
+    printf("cur:%d,%d\n",cur.row,cur.col);
     //1.判断当前点是否能落脚
     if(!CanStay(maze,cur))
     {
@@ -450,6 +453,7 @@ void TestRound1()
     TEST_HEADER;
     Maze maze;
     MazeInit(&maze);
+    MazePrint(&maze);
     Point entry={0,1};
     GetPath(&maze,entry);
     MazePrint(&maze);
@@ -460,6 +464,7 @@ void TestRound2()
     TEST_HEADER;
     Maze maze;
     MazeInit(&maze);
+    MazePrint(&maze);
     Point entry={0,1};
     GetPathByLoop(&maze,entry);
     MazePrint(&maze);
@@ -470,7 +475,8 @@ void TestRound3()
 {
     TEST_HEADER;
     Maze maze;
-    MazeInit(&maze);
+    MaseInitShortPath(&maze);
+    MazePrint(&maze);
     Point entry={0,1};
     GetShortPath(&maze,entry);
     MazePrint(&maze);
@@ -480,7 +486,8 @@ void TestRound4()
 {
     TEST_HEADER;
     Maze maze;
-    MazeInit(&maze);
+    MaseInitShortPathWithCycle(&maze);
+    MazePrint(&maze);
     Point entry={0,1};
     GetShortPathWithCycle(&maze,entry);
     MazePrint(&maze);
