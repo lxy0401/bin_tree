@@ -2,6 +2,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+//次函数用于迷宫测试所用
+//通常棧是不允许进行遍历的，单若进行测试或者调试除外
+//此时的遍历仅用于测试所用
+//之所以写这个函数是为了能够从函数对入口开始打印路线
 void SeqStactDebugPrint(SeqStact* stack,const char* msg)
 {
     printf("[%s]\n",msg);
@@ -133,25 +138,6 @@ void SeqStactAssgin(SeqStact* from,SeqStact* to)
     return ;
 }
 
-//次函数用于迷宫测试所用
-//通常棧是不允许进行遍历的，单若进行测试或者调试除外
-//此时的遍历仅用于测试所用
-//之所以写这个函数是为了能够从函数对入口开始打印路线
-//#ifdef TEST_MAZE 
-//#include "maze.c"
-//#include "seqstack.h"
-//#include <stdio.h>
-//void SeqStactDebugPrint(SeqStact* stack,const char* msg)
-//{
-//    printf("[%s]\n",msg);
-//    size_t i=0;
-//    for(;i<stack->size;i++)
-//    {
-//        printf("(%d,%d)\n",stack->data[i],row,stack->data[i],col);
-//    }
-//    printf("\n");
-//}
-////#endif
 /**
  *
  *

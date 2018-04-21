@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "seqstack.h"
-//#define FOR_MAZE
+
 #define Max_ROW 6
 #define Max_COL 6
 typedef struct Maze
@@ -50,11 +50,6 @@ void MazePrint(Maze* maze)
  * 本质上还是使用栈，不过这个栈是由操作系统提供的，即函数调用栈
  *
  * ***********/
-//typedef struct Point
-//{
-//    int row;
-//    int col;
-//}Point;
 
 //判断点是否能落脚
 int CanStay(Maze* maze,Point pt)
@@ -99,8 +94,9 @@ int IsExit(Maze* maze,Point cur,Point entry)
 
 void _GetPath(Maze* maze,Point cur,Point entry)
 {
-    //1.判定当前点是否能落脚
+
     printf("cur:%d,%d\n",cur.row,cur.col);
+    //1.判定当前点是否能落脚
     if(!CanStay(maze,cur))
     {
         //不能落脚
@@ -352,19 +348,29 @@ void MaseInitShortPathWithCycle(Maze* maze)
 
 int CanStayWithCycle(Maze* maze,Point cur,Point pre)
 {
+    //1.判断当前点是否在地图上
     if(cur.row<0 || cur.row>=Max_ROW || cur.col<0 || cur.col>=Max_COL)
     {
         return 0;
     }
+    //当前点是不是墙
     int cur_value=maze->map[cur.row][cur.col];
     if(cur_value == 0)
     {
         return 0;
     }
+    //3.若当前点为1，表示可以直接落脚
     if(cur_value == 1)
     {
         return 1;
     }
+    //4.在取出prev_value之前要判断prev点是否为非法点
+    //if(pre.row == -1 && pre.col == -1)
+    //{
+    //若pre为非法点就只有这一种情况
+    //但这种情况又不用考虑，因为若pre为非法点，则cur一定为入口点，
+    //判定入口点是否能落脚与pre无关
+    //}
     int pre_value=maze->map[pre.row][pre.col];
     if(cur_value>pre_value+1)
     {
@@ -378,6 +384,7 @@ void MarkWithCycle(Maze* maze,Point cur,Point pre)
     if(pre.row == -1 && pre.col == -1)
     {
         maze->map[cur.row][cur.col]=2;
+        //针对入口点与已被标记的点，此时的pre为非法点，不能用Maze方法进行标记
         return;
     }
     int pre_value=maze->map[pre.row][pre.col];
@@ -386,24 +393,32 @@ void MarkWithCycle(Maze* maze,Point cur,Point pre)
 
 void _GetShortPathWithCycle(Maze* maze,Point cur,Point pre,Point entry,SeqStact* cur_path,SeqStact* short_path)
 {
+
+    printf("cur:%d,%d\n",cur.row,cur.col);
+    //1.判断当前点是否能落脚（判定规则变了）
     if(!CanStayWithCycle(maze,cur,pre))
     {
         return ;
     }
+    //2.若能落脚，标记当前点且当前点插入到cur_path中（标记规则也变了）
     MarkWithCycle(maze,cur,pre);
     if(IsExit(maze,cur,entry))
     {
         printf("找到了一条路径\n");
         SeqStactPush(cur_path,cur);
+        //3.判定当前点是否为出口（判定规则没变）
+        //若是出口，找到路径，另cur_path与short_path比较
         if(cur_path->size < short_path->size || short_path->size == 0)
         {
             printf("找到了一条较短的出路\n");
             SeqStactAssgin(cur_path,short_path);
         }
+        //进行回溯，不管当前找到对路径是否为最短路径，都要进行回溯
         SeqStactPop(cur_path);
         return ;
     }
-
+    //若当前点不是出口，以当前点为基准点按照上、右、下、左（顺时针）的顺序判定四个方向
+    //若四个方向都递归地探测过了，就出棧，进行回溯
     Point up = cur;
     up.row-=1;
     _GetShortPathWithCycle(maze,up,cur,entry,cur_path,short_path);
