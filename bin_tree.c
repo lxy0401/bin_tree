@@ -119,6 +119,60 @@ void TreeLevelOrder(TreeNode* root)
    }
    printf("\n");
 }
+
+//还原一棵树
+//输入一个数组（数组对每个元素就是树上对节点）
+//根据数组内容，构建出一棵树，数组中元素内容符合树对先序遍历结果
+
+//辅助递归函数
+TreeNode* _TreeCreate(TreeNodeType data[],size_t size,size_t* index,TreeNodeType null_node)
+{
+    if(index == NULL)
+    {
+        //非法输入
+        return NULL;
+    }
+    if(*index >= size)
+    {
+        //数组遍历结束
+        return NULL;
+    }
+    if(data[*index] == null_node)
+    {
+        //空树
+        return NULL;
+    }
+    TreeNode* new_node=CreateTreeNode(data[*index]);
+    //先
+    new_node->lchild=_TreeCreate(data,size,index,null_node);
+    //后
+    new_node->rchild=_TreeCreate(data,size,index,null_node);
+    return new_node;
+}
+TreeNode* TreeCreate(TreeNodeType data[] ,size_t size,char null_node)
+{
+    //1.根据index指向对元素内容创建一个节点
+    //2.先++index后递归的构架新的节点对左子树
+    //3.再++index后递归的构架新的节点对右子树
+    size_t index=0;//表示当前取数组中对那个元素
+    return _TreeCreate(data,size,&index,null_node);//辅助完成递归
+}
+
+
+//树对拷贝
+TreeNode* TreeClone(TreeNode* root)
+{
+    if(root == NULL)
+    {
+        //空树
+        return NULL;
+    }
+    //按照先序方式遍历
+    TreeNode* new_node=CreateTreeNode(root->data);
+    new_node->lchild=TreeClone(root->lchild);
+    new_node->rchild=TreeClone(root->rchild);
+    return new_node;
+}
 /*****
  *
  *以下为测试代码
@@ -217,6 +271,20 @@ void TestLevelOrder()
     TreeLevelOrder(a);
     printf("\n");
 }
+
+void TestCreate()
+{
+    TEST_HEADER;
+    TreeNodeType data[]="adb##eg###c#f##";
+    TreeNode* root=TreeCreate(data,(sizeof(data)/sizeof(data[0]))-1,'#');
+    printf("\n");
+    TreePreOrder(root);
+    TreeInOrder(root);
+    TreePostOrder(root);
+    //TreeLevelOrder(root);
+    printf("\n");
+}
+
 int main()
 {
     TestInit();
@@ -224,6 +292,7 @@ int main()
     TestInOrder();
     TestPostOrder();
     //TestLevelOrder();
+    TestCreate();
     return 0;
 }
 #endif
