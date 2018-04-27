@@ -123,7 +123,7 @@ void TreeLevelOrder(TreeNode* root)
 //还原一棵树
 //输入一个数组（数组对每个元素就是树上对节点）
 //根据数组内容，构建出一棵树，数组中元素内容符合树对先序遍历结果
-
+/////
 //辅助递归函数
 TreeNode* _TreeCreate(TreeNodeType data[],size_t size,size_t* index,TreeNodeType null_node)
 {
