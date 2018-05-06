@@ -1,5 +1,6 @@
 #include "bin_tree.h"
 #include "seqqueue.h"
+#include "seqstack1.h"
 #include <stdio.h>
 #include <stdlib.h>
 //对于链表来说，使用链表对头节点的指针表示一个链表
@@ -327,6 +328,132 @@ TreeNode* TreeRChild(TreeNode* node)
     }
     return node->rchild;
 }
+
+/********
+ *
+ * 二叉树的面试题
+ *
+ *
+ * *****/
+//使用非递归的方式来完成二叉树的先、中、后序遍历
+//先序
+void TreePreOrderByLoop(TreeNode* root)
+{
+    if(root == NULL)
+    {
+        return ;
+    }
+    //1.先把根节点入栈
+    SeqStact stack;
+    SeqStactInit(&stack);
+    SeqStactPush(&stack,root);
+    //2.循环开始，若栈为空，循环结束
+    TreeNode* cur=NULL;
+    while(SeqStactTop(&stack,&cur))
+    {
+        //a)取栈顶元素为栈顶元素
+        //b)出栈
+        SeqStactPop(&stack);
+        //c)访问当前元素，即打印当前元素
+        printf("%c",cur->data);
+        //d)把当前元素的右子树入栈
+        if(cur->rchild!=NULL)
+        {
+            SeqStactPush(&stack,cur->rchild);
+        }
+        //e)把当前元素的左子树入栈
+        if(cur->lchild!= NULL)
+        {
+            SeqStactPush(&stack,cur->lchild);
+        }
+    }   
+    printf("\n");
+    return;
+}
+
+//非递归地实现中序遍历
+void TreeInOrderByLoop(TreeNode* root)
+{
+    if(root == NULL)
+    {
+        return ;
+    }
+    //1.定义一个cur指针
+    SeqStact stack;
+    SeqStactInit(&stack);
+    TreeNode* cur=root;
+    while(1)
+    {
+        //2.循环地判断cur是否为NULL
+        //若cur!=NULL，则cur入棧，并cur=cur->lchild
+        while(cur != NULL)
+        {
+            SeqStactPush(&stack,cur);
+            cur=cur->lchild;
+        }
+        //3.若cur=NULLl取棧顶元素，访问并出棧
+        TreeNode* top = NULL;
+        int ret=SeqStactTop(&stack,&top);
+        if(ret == 0)
+        {
+            //此时说明棧中没有元素遍历
+            printf("\n");
+            return ;
+        }
+        printf("%c",top->data);
+        SeqStactPop(&stack);
+        //4.让cur=cur->rchild,重复刚才对循环过程
+        cur=top->rchild;
+    }
+    return ;
+}
+
+//非递归地实现后序遍历
+void TreePostOrderByLoop(TreeNode* root)
+{
+    if(root == NULL)
+    {
+        return ;
+    }
+    //1.定义一个指针cur指向根节点root
+    TreeNode* cur=root;
+    TreeNode* pre=NULL;//保存着上一个访问过的元素
+    SeqStact stack;
+    SeqStactInit(&stack);
+    while(1)
+    {
+    //2.循环判定cur是否为NULL
+    //若cur!= NULL,则cur入栈，cur=cur->lchild
+        while(cur!=NULL)
+        {
+            SeqStactPush(&stack,cur);
+            cur=cur->lchild;
+        }
+        TreeNode* top = NULL;
+        int ret = SeqStactTop(&stack,&top);
+        if(ret == 0)
+        {
+            printf("\n");
+            return ;
+        }
+
+    //3.若cur==NULL,循环取栈定元素
+    //4.对栈顶元素进行判定
+    //若栈顶元素的rchild=上一个元素，栈顶元素的rchild==NULL，才能访问栈顶元素，同时进行出栈
+    //5.若不满足上面的条件，则让cur指向栈顶的右子树，循环判定
+        if(top->rchild == NULL || top->rchild == pre)
+        {
+            printf("%c",top->data);
+            SeqStactPop(&stack);
+            pre=top;
+        }
+        else
+        {
+            cur=top->rchild;
+        }
+    }
+    return;
+}
 /*****
  *
  *以下为测试代码
@@ -543,6 +670,33 @@ void TestParent()
     TreeNode* parent=TreeFind(root,'g');
     printf("result expected e,actual %p\n",parent);
 }
+
+void TestPreOrderByLoop()
+{
+    TEST_HEADER;
+    TreeNodeType data[]="abd##eg###c#f##";
+    TreeNode* root=TreeCreate(data,(sizeof(data)/sizeof(data[0]))-1,'#');
+    printf("非递归地实现先序遍历\n");
+    TreePreOrderByLoop(root);
+}
+
+void TestInOrderByLoop()
+{
+    TEST_HEADER;
+    TreeNodeType data[]="abd##eg###c#f##";
+    TreeNode* root=TreeCreate(data,(sizeof(data)/sizeof(data[0]))-1,'#');
+    printf("非递归地实现中序遍历\n");
+    TreeInOrderByLoop(root);
+}
+
+void TestPostOrderByLoop()
+{
+    TEST_HEADER;
+    TreeNodeType data[]="abd##eg###c#f##";
+    TreeNode* root=TreeCreate(data,(sizeof(data)/sizeof(data[0]))-1,'#');
+    printf("非递归地实现后序遍历\n");
+    TreePostOrderByLoop(root);
+}
 int main()
 {
     TestInit();
@@ -560,6 +714,9 @@ int main()
     TestHeight();
     TestFind();
     TestParent();
+    TestPreOrderByLoop();
+    TestInOrderByLoop();
+    TestPostOrderByLoop();
     return 0;
 }
 #endif
