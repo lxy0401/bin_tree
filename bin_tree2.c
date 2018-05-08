@@ -3,6 +3,7 @@
 #include "seqstack1.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 //对于链表来说，使用链表对头节点的指针表示一个链表
 //对于我们的二叉树来说，使用根节点来表示一个树
 
@@ -572,6 +573,61 @@ int IsCompleteTree(TreeNode* root)
     //所有节点都遍历完了，有没有return 0;，则一定是完全二叉树
     return 1;
 }
+
+//根据二叉树的先序和中序遍历（或者后序和中序遍历）来重建二叉树
+size_t Find(TreeNodeType arry[],size_t left,size_t right,TreeNodeType to_find)
+{
+    size_t i = left;
+    for(;i<right;++i)
+    {
+        if(arry[i] = to_find)
+        {
+            return i;
+        }
+    }
+    return (size_t)-1;
+}
+TreeNode* _TreeRubuild(TreeNodeType pre_order[],size_t pre_order_size,size_t* pre_order_index,
+                        TreeNodeType in_order[],size_t in_order_left,size_t in_order_right)
+//TreeNodeType pre_order[] 表示先序遍历的结果
+//size_t pre_order_size 表示先序遍历有几个元素
+//size_t* pre_order_index 表示遍历到了第几个元素
+//TreeNodeType in_order[] 表示中序遍历的结果
+{
+    if(in_order_left >= in_order_right)
+    {
+        //无效区间
+        //表示当前子树的中序遍历结果为空，说明这棵子树为空树
+        return NULL;
+    }
+    if(pre_order_index == NULL || *pre_order_index >= pre_order_size)
+    {
+        //pre_order_index == NULL 表示非法输入
+        //*pre_order_index >= pre_order_size 表示遍历结束
+        return NULL;
+    }
+    //根据先序遍历结果取出当前值，根据这个值构建出一个节点
+    //此时的new_node为当前树的根节点
+    TreeNode* new_node = CreateTreeNode(pre_order[*pre_order_index]);
+    //查找一下当前节点在在中序遍历中的位置
+    size_t cur_root_in_order_index = Find(in_order,in_order_left,in_order_right,new_node->data);
+    //该处断言表示cur_root_in_order_index一定不能为-1
+    assert(cur_root_in_order_index != (size_t)-1);
+    ++(*pre_order_index);
+    //左子树区间[in_order_left,cur_root_in_order_index)
+    new_node->lchild = _TreeRubuild(pre_order,pre_order_size,pre_order_index,in_order,in_order_left,cur_root_in_order_index);
+    //右子树区间[cur_root_in_order_index+1,in_order_right)
+    new_node->rchild = _TreeRubuild(pre_order,pre_order_size,pre_order_index,in_order,cur_root_in_order_index+1,in_order_right);
+    return new_node;
+}
+TreeNode* TreeRebuild(TreeNodeType pre_order[],TreeNodeType in_order[],size_t size)
+{
+    size_t pre_order_index = 0;//下标
+    //表示一个前闭后开的区间，[in_order_left,in_order_right)
+    size_t in_order_left = 0;
+    size_t in_order_right = 0;
+    return _TreeRubuild(pre_order,size,&pre_order_index,in_order,in_order_left,in_order_right);
+}
 /*****
  *
  *以下为测试代码
@@ -898,6 +954,16 @@ void TestIsCompleteTree()
     ret = IsCompleteTree(root5);
     printf("ret expected 1,actual %d\n",ret);
 }
+
+void TestRebuild()
+{
+    TEST_HEADER;
+    TreeNodeType pre_order[] = "abdegcf";
+    TreeNodeType in_order[] = "dbgeacf";
+    TreeNode* root =  TreeRebuild(pre_order,in_order,sizeof(pre_order)/sizeof(pre_order[0]));
+    //TreeNodeType data[]="abd##eg###c#f##";
+    //TreeNode* root=TreeCreate(data,(sizeof(data)/sizeof(data[0]))-1,'#');
+}
 int main()
 {
     TestInit();
@@ -921,6 +987,7 @@ int main()
     TestMirror();
     TestMirrorByLoop();
     TestIsCompleteTree();
+    TestRebuild();
     return 0;
 }
 #endif
